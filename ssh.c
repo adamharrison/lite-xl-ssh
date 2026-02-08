@@ -20,9 +20,9 @@
 // 1. Host checking.
 // 2. Callback-based password entry.
 // 3. Hook up lite-xl file functions
-// 4. Add in proc execute stuff.
+// 4. Add in proc execute stuff for remote executions of things.
 // 5. Hook into terminal if installed with a shell.
-// 6. 
+// 6. Allow for lua style file operations, ratrher than just reading amounts of bytes (i.e. :read("*l"), etc..)
 
 
 typedef enum {

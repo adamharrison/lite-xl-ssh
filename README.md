@@ -25,8 +25,6 @@ end
 
 ### Building
 
-Build with:
-
 ```
-gcc -g -fPIC  ssh.c -Wl,-Bstatic -lssh2 -lssl -lcrypto -lgpg-error -lssl -ldl -pthread -lcrypto -ldl -pthread -lz -Wl,-Bdynamic -shared -o libssh.so
+./build.sh
 ```
