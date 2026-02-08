@@ -1,6 +1,4 @@
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
+
 #include <libssh2.h>
 #include <libssh2_sftp.h>
 #include <stdlib.h>
@@ -10,12 +8,21 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <fcntl.h>
-//#include <lite_xl_plugin_api.h>
+#ifdef LIBSSH_STANDALONE
+  #include <lua.h>
+  #include <lualib.h>
+  #include <lauxlib.h>
+#else
+  #include <lite_xl_plugin_api.h>
+#endif
 
 // TODO
 // 1. Host checking.
 // 2. Callback-based password entry.
-// 3. 
+// 3. Hook up lite-xl file functions
+// 4. Add in proc execute stuff.
+// 5. Hook into terminal if installed with a shell.
+// 6. 
 
 
 typedef enum {
@@ -503,8 +510,13 @@ static const luaL_Reg ssh_api[] = {
 
 #define LUASSH_VERSION "unknown"
  
-//int luaopen_litexl_libssh() {
+
+#ifndef LIBSSH_STANDALONE
+int luaopen_lite_xl_libssh(lua_State* L, void* XL) {
+  lite_xl_plugin_init(XL);
+#else
 int luaopen_libssh(lua_State* L) {
+#endif
   int rc = libssh2_init(0);
   if (rc)
     return luaL_error(L, "unable to initialize ssh2: %d", rc);
