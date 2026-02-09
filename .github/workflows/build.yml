@@ -1,0 +1,62 @@
+name: CI
+on: { push: { branches: [master] } }
+permissions:
+  contents: write
+jobs:
+  build_linux_windows:
+    runs-on: ubuntu-latest
+    defaults: { run: { shell: bash } }
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Clone Submodules
+        run: git submodule update --init --depth=1 
+      - name: Build Libraries
+        env: { ANDROID_NDK_HOME: "${{ steps.setup-ndk.outputs.ndk-path }}", GITHUB_TOKEN: "${{ github.token }}" }
+        run: |
+          export FULL_VERSION=`git describe --tags`
+          git config --global user.name "Github Actions" && git config --global user.email "adamdharrison@gmail.com"
+          sudo apt-get install -y gcc-multilib mingw-w64 && mkdir bin
+          ./build.sh clean && BIN="bin/libssh.x86_64-linux.so" ./build.sh -DLIBSSH_VERSION='"'$FULL_VERSION'"' &&
+          ./build.sh clean && CFLAGS="-m32" BIN="bin/libssh.x86-linux.so" ./build.sh -DLIBSSH_VERSION='"'$FULL_VERSION'"' &&
+          ./build.sh clean && BIN=bin/libssh.x86_64-windows.dll CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-gcc-ar \
+              CMAKE_DEFAULT_FLAGS="-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_SYSTEM_NAME=Windows" ./build.sh  -DLIBSSH_VERSION='"'$FULL_VERSION'"'
+          ./build.sh clean && BIN=bin/libssh.x86-windows.dll CC=i686-w64-mingw32-gcc AR=i686-w64-mingw32-gcc-ar \
+              CMAKE_DEFAULT_FLAGS="-DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_SYSTEM_NAME=Windows" ./build.sh  -DLIBSSH_VERSION='"'$FULL_VERSION'"'
+          if [[ `git tag --points-at HEAD | head -c 1` == "v" ]]; then
+            export VERSION=`git describe --tags --abbrev=0 --match "v*" | tail -c +2`
+            gh release delete -y v$VERSION || true;
+            gh release create -t v$VERSION v$VERSION bin/*.so bin/*.dll
+            gh release delete -y latest || true;
+            gh release create -t latest latest bin/*.so bin/*.dll
+          fi
+  build_macos:
+    needs: build_linux_windows
+    runs-on: macos-12
+    env:
+      CC: clang
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: Clone Submodules
+        run: git submodule update --init --depth=1
+      - name: Build MacOS
+        env: { GITHUB_TOKEN: "${{ github.token }}" }
+        run: |
+          export FULL_VERSION=`git describe --tags` && mkdir bin
+          ./build.sh clean && BIN="bin/libssh.x86_64-darwin.so" ./build.sh -DLIBSSH_VERSION='"'$FULL_VERSION'"'
+          ./build.sh clean && BIN="bin/libssh.aarch64-darwin.so" CC=clang CFLAGS="-arch arm64" ./build.sh -DLIBSSH_VERSION='"'$FULL_VERSION'"'
+          if [[ `git tag --points-at HEAD | head -c 1` == "v" ]]; then
+            export VERSION=`git describe --tags --abbrev=0 --match "v*" | tail -c +2`
+            gh release upload v$VERSION bin/*.so
+            gh release upload latest bin/*.so
+            git branch -f latest HEAD
+            git tag -f latest
+            git push -f origin refs/heads/latest
+            git push -f origin refs/tags/latest
+          fi
+
+
+

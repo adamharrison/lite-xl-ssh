@@ -1,9 +1,13 @@
-
+#ifdef _WIN32
+  #include <winsock2.h>
+  #include <windows.h>
+#else
+  #include <netdb.h>
+  #include <sys/socket.h>
+#endif
 #include <libssh2.h>
 #include <libssh2_sftp.h>
 #include <stdlib.h>
-#include <netdb.h>
-#include <sys/socket.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -388,8 +392,15 @@ static int f_ssh_connect(lua_State* L) {
     return 2;
   }
   lua_getfield(L, 1, "yield");
-  if (!lua_isnil(L, -1))
-    fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);  
+  #ifndef _WIN32
+    if (!lua_isnil(L, -1))
+      fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);  
+  #else 
+    if (!lua_isnil(L, -1)) {
+      u_long mode = 1;
+      int result = ioctlsocket(fd, FIONBIO, &mode);
+    }
+  #endif
   lua_pop(L, 1);
   session->state = STATE_CONNECTING;
   lua_pushinteger(L, fd);

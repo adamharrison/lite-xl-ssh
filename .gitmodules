@@ -4,8 +4,6 @@
 [submodule "lib/lite-xl"]
 	path = lib/lite-xl
 	url = git@github.com:lite-xl/lite-xl.git
-[submodule "lib/openssl"]
-	path = lib/openssl
-	url = https://github.com/openssl/openssl.git
-	branch = openssl-3.6.1
-	shallow = true
+[submodule "lib/mbedtls"]
+	path = lib/mbedtls
+	url = https://github.com/Mbed-TLS/mbedtls.git
