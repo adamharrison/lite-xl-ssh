@@ -3,7 +3,7 @@
 	url = https://github.com/libssh2/libssh2.git
 [submodule "lib/lite-xl"]
 	path = lib/lite-xl
-	url = git@github.com:lite-xl/lite-xl.git
+	url = https://github.com/lite-xl/lite-xl.git
 [submodule "lib/mbedtls"]
 	path = lib/mbedtls
 	url = https://github.com/Mbed-TLS/mbedtls.git
