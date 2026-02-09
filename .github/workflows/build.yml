@@ -17,7 +17,7 @@ jobs:
         run: |
           export FULL_VERSION=`git describe --tags`
           git config --global user.name "Github Actions" && git config --global user.email "adamdharrison@gmail.com"
-          sudo apt-get install -y gcc-multilib mingw-w64 && mkdir bin
+          sudo apt-get update && sudo apt-get install -y gcc-multilib mingw-w64 && mkdir bin
           ./build.sh clean && BIN="bin/libssh.x86_64-linux.so" ./build.sh -DLIBSSH_VERSION='"'$FULL_VERSION'"' &&
           ./build.sh clean && CFLAGS="-m32" BIN="libssh.x86-linux.so" ./build.sh -DLIBSSH_VERSION='"'$FULL_VERSION'"' &&
           ./build.sh clean && BIN=bin/libssh.x86_64-windows.dll CC=x86_64-w64-mingw32-gcc AR=x86_64-w64-mingw32-gcc-ar \
