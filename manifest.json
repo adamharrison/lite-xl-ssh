@@ -4,7 +4,7 @@
       "id": "ssh",
       "description": "Allows for file operations and project management over SSH tunnels.",
       "path": "init.lua",
-      "mod_verison": 3,
+      "mod_verison": 4,
       "files": [{
         "url": "https://github.com/adamharrison/lite-xl-ssh/releases/download/latest/libssh.x86-linux.so",
         "arch": "x86-linux",
