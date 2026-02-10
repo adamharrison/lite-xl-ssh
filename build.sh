@@ -11,16 +11,22 @@
 
 CFLAGS="$CFLAGS -fPIC -Ilib/prefix/include -Ilib/lite-xl/resources/include"
 LDFLAGS="$LDFLAGS -Llib/prefix/lib -Llib/prefix/lib64"
-CMAKE_DEFAULT_FLAGS="$CMAKE_DEFAULT_FLAGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER -DCMAKE_INSTALL_PREFIX=`pwd`/lib/prefix"
+CMAKE_DEFAULT_FLAGS="$CMAKE_DEFAULT_FLAGS -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_FIND_ROOT_PATH_MODE_PROGRAM=NEVER -DBUILD_SHARED_LIBS=OFF -DBUILD_EXAMPLES=OFF -DBUILD_TESTING=OFF -DCMAKE_FIND_ROOT_PATH_MODE_INCLUDE=NEVER -DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=OFF -DCMAKE_PREFIX_PATH=`pwd`/lib/prefix -DCMAKE_INSTALL_PREFIX=`pwd`/lib/prefix "
 
 mkdir -p lib/prefix/include lib/prefix/lib
 
+[[ " $@" != *" -g"* ]] && CMAKE_DEFAULT_FLAGS="$CMAKE_DEFAULT_FLAGS -DCMAKE_BUILD_TYPE=Release" || CMAKE_DEFAULT_FLAGS="$CMAKE_DEFAULT_FLAGS -DCMAKE_BUILD_TYPE=Debug"
+if [[ " $@" != *" -O"* ]]; then
+  [[ " $@" != *" -g"* ]] && CFLAGS="$CFLAGS -O3" || CFLAGS="$CFLAGS -O0"
+fi
+
 # We can only build with one job here, because the generated makefile is misconfigured.
 if [[ "$@" != *"-lmbedcrypto"* ]]; then
-  [ ! -e "lib/mbedtls/build" ] && { cd lib/mbedtls && mkdir build && cd build && CFLAGS="$CFLAGS -w" cmake .. $CMAKE_DEFAULT_FLAGS -G "Unix Makefiles" -DENABLE_TESTING=OFF -DENABLE_PROGRAMS=OFF && $MAKE -j $JOBS && CFLAGS="$CFLAGS -w" $MAKE install && cd ../../../ || exit -1; }
+  [ ! -e "lib/mbedtls/build" ] && { cd lib/mbedtls && mkdir build && cd build && CFLAGS="$CFLAGS -w" cmake .. $CMAKE_DEFAULT_FLAGS -G "Unix Makefiles" -DENABLE_TESTING=OFF -DENABLE_PROGRAMS=OFF && $MAKE -j $JOBS && $MAKE install && cd ../../../ || exit -1; }
   LDFLAGS="$LDFLAGS -lmbedcrypto"
 fi
 if [[ "$@" != *"-lssh2"* ]]; then
+  echo cmake .. $CMAKE_DEFAULT_FLAGS -DCRYPTO_BACKEND="mbedTLS" -G "Unix Makefiles"
   [ ! -e "lib/libssh2/build" ] && { cd lib/libssh2 && rm -rf build && mkdir build && cd build && cmake .. $CMAKE_DEFAULT_FLAGS -DCRYPTO_BACKEND="mbedTLS" -G "Unix Makefiles" && make -j $JOBS && make install && cd ../../.. || exit -1; }
   LDFLAGS="-lssh2 $LDFLAGS"
 fi

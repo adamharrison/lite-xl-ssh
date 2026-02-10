@@ -325,7 +325,7 @@ static int f_ssh_connectk(lua_State* L, int status, lua_KContext ctx) {
         if (result == LIBSSH2_ERROR_EAGAIN && lua_isyieldable(L))
           return lua_sshyield(L, f_ssh_connectk);
       } while (result == LIBSSH2_ERROR_EAGAIN);
-      if (result != 0)
+      if (result < 0)
         return lua_pushssherr(L, session);
       session->state = STATE_AUTHENTICATING;
     } // deliberate fallthrough
@@ -391,6 +391,10 @@ static int f_ssh_connect(lua_State* L) {
     lua_pushfstring(L, "unable to create socket: %s", strerror(errno));
     return 2;
   }
+  lua_getfield(L, 1, "trace");
+  if (lua_toboolean(L, -1))
+    libssh2_trace(session->ssh, LIBSSH2_TRACE_KEX | LIBSSH2_TRACE_SOCKET | LIBSSH2_TRACE_TRANS);
+  lua_pop(L, 1);
   lua_getfield(L, 1, "yield");
   #ifndef _WIN32
     if (!lua_isnil(L, -1))
